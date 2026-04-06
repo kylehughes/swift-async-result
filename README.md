@@ -1,7 +1,7 @@
 # AsyncResult
 
-[![Platform Versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fkylehughes%2FAsyncResult%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/kylehughes/AsyncResult)
-[![Swift Versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fkylehughes%2FAsyncResult%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/kylehughes/AsyncResult)
+[![Platform Versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fkylehughes%2Fswift-async-result%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/kylehughes/swift-async-result)
+[![Swift Versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fkylehughes%2Fswift-async-result%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/kylehughes/swift-async-result)
 [![Test](https://github.com/kylehughes/swift-async-result/actions/workflows/test.yml/badge.svg)](https://github.com/kylehughes/swift-async-result/actions/workflows/test.yml)
 
 `Result`, extended with an in-progress case for asynchronous operations, e.g.
