@@ -1,0 +1,8 @@
+//
+//  Copyright © 2026 Kyle Hughes. All rights reserved.
+//
+
+enum TestError: Error, Equatable {
+    case first
+    case second
+}

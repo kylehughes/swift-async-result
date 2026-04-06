@@ -26,7 +26,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     @inlinable
     public init(catching body: () throws(Failure) -> Success) {
         do {
-            self = .completed(.success(try body()))
+            self = try .completed(.success(body()))
         } catch {
             self = .completed(.failure(error))
         }
@@ -40,7 +40,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     @inlinable
     public init(catching body: () throws -> Success) where Failure == any Error {
         do {
-            self = .completed(.success(try body()))
+            self = try .completed(.success(body()))
         } catch {
             self = .completed(.failure(error))
         }
@@ -68,7 +68,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     ///
     /// - Parameter body: An asynchronous closure that returns `Success` or throws `Failure`.
     @inlinable
-    public init(catching body: sending () async throws(Failure) -> Success) async {
+    public init(catching body: () async throws(Failure) -> Success) async {
         do {
             self = try await .completed(.success(body()))
         } catch {
@@ -82,7 +82,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     ///
     /// - Parameter body: An asynchronous throwing closure that returns `Success`.
     @inlinable
-    public init(catching body: sending () async throws -> Success) async where Failure == any Error {
+    public init(catching body: () async throws -> Success) async where Failure == any Error {
         do {
             self = try await .completed(.success(body()))
         } catch {
@@ -97,8 +97,8 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Parameter mapError: A closure that converts the thrown error into `Failure`.
     @inlinable
     public init(
-        catching body: sending () async throws -> Success,
-        mapError: sending (any Error) -> Failure
+        catching body: () async throws -> Success,
+        mapError: (any Error) -> Failure
     ) async {
         do {
             self = try await .completed(.success(body()))
@@ -259,7 +259,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     ///   in-progress state.
     @inlinable
     public func flatMap<NewSuccess>(
-        _ transform: sending (Success) async -> AsyncResult<NewSuccess, Failure>
+        _ transform: (Success) async -> AsyncResult<NewSuccess, Failure>
     ) async -> AsyncResult<NewSuccess, Failure> {
         switch self {
         case let .completed(result):
@@ -300,7 +300,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     ///   in-progress state.
     @inlinable
     public func flatMapError<NewFailure>(
-        _ transform: sending (Failure) async -> AsyncResult<Success, NewFailure>
+        _ transform: (Failure) async -> AsyncResult<Success, NewFailure>
     ) async -> AsyncResult<Success, NewFailure> {
         switch self {
         case let .completed(result):
@@ -356,7 +356,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     ///   state.
     @inlinable
     public func map<NewSuccess>(
-        _ transform: sending (Success) async -> NewSuccess
+        _ transform: (Success) async -> NewSuccess
     ) async -> AsyncResult<NewSuccess, Failure> {
         switch self {
         case let .completed(result):
@@ -376,8 +376,8 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Returns: A new asynchronous result with both types transformed.
     @inlinable
     public func map<NewSuccess, NewFailure>(
-        success transformSuccess: sending (Success) async -> NewSuccess,
-        failure transformFailure: sending (Failure) async -> NewFailure
+        success transformSuccess: (Success) async -> NewSuccess,
+        failure transformFailure: (Failure) async -> NewFailure
     ) async -> AsyncResult<NewSuccess, NewFailure> {
         switch self {
         case let .completed(result):
@@ -411,7 +411,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     ///   state.
     @inlinable
     public func mapError<NewFailure>(
-        _ transform: sending (Failure) async -> NewFailure
+        _ transform: (Failure) async -> NewFailure
     ) async -> AsyncResult<Success, NewFailure> {
         switch self {
         case let .completed(result):
@@ -480,7 +480,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Returns: An infallible asynchronous result.
     @inlinable
     public func recover(
-        _ transform: sending (Failure) async -> Success
+        _ transform: (Failure) async -> Success
     ) async -> AsyncResult<Success, Never> {
         switch self {
         case let .completed(result):
@@ -573,7 +573,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Returns: A new asynchronous result with the transformed success value, or the thrown error as a failure.
     @inlinable
     public func tryMap<NewSuccess>(
-        _ transform: sending (Success) async throws(Failure) -> NewSuccess
+        _ transform: (Success) async throws(Failure) -> NewSuccess
     ) async -> AsyncResult<NewSuccess, Failure> {
         switch self {
         case let .completed(result):
@@ -596,7 +596,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Returns: A new asynchronous result with the transformed success value, or the thrown error as a failure.
     @inlinable
     public func tryMap<NewSuccess>(
-        _ transform: sending (Success) async throws -> NewSuccess
+        _ transform: (Success) async throws -> NewSuccess
     ) async -> AsyncResult<NewSuccess, Failure> where Failure == any Error {
         switch self {
         case let .completed(result):
@@ -621,8 +621,8 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Returns: A new asynchronous result with the transformed success value, or the mapped error as a failure.
     @inlinable
     public func tryMap<NewSuccess>(
-        _ transform: sending (Success) async throws -> NewSuccess,
-        mapError: sending (any Error) -> Failure
+        _ transform: (Success) async throws -> NewSuccess,
+        mapError: (any Error) -> Failure
     ) async -> AsyncResult<NewSuccess, Failure> {
         switch self {
         case let .completed(result):

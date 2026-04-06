@@ -38,7 +38,8 @@ Tests use Swift Testing (`import Testing`, `@Test`) in `Tests/AsyncResultTests/A
 - **Lexicographic symbol ordering** — within each type, members are ordered by access level, then alphabetically by identifier. Overloads of the same name are grouped together (sync before async). Suites and top-level types at file scope follow the same rule.
 - **`@Test("...")` and `@Suite("...")`** — all test annotations include description strings. Test descriptions are declarative sentences asserting what the test proves.
 - **`@inlinable`** on all public members.
-- **`sending`** on async closure parameters (Swift 6.2 strict concurrency). Sync closure parameters do not use `sending`.
+- **No `sending`** on closure parameters — under SE-0461 (Swift 6.2 default), `nonisolated async` methods inherit the caller's isolation, so closures awaited inline never cross an isolation boundary.
+- **Percolated `try`/`await`** — place `try` and `await` on the outermost expression (`self = try await .completed(.success(body()))`) rather than directly on the throwing/async call. This keeps the assignment visually uniform across overloads.
 - **Overload pattern** — `init(catching:)` and `tryMap` both follow the same three-variant pattern: `throws(Failure)` (typed), `throws` with `where Failure == any Error` (untyped), and `throws` with `mapError:` (untyped with mapping). Each has sync + async overloads (6 total per family).
 - **Async overloads** — each sync combinator has a corresponding `async` overload. When testing async overloads, closures must be genuinely async (use a helper like `forceAsync`) or the compiler will select the sync overload, resulting in missing coverage.
 - **`tryMap` explicit returns** — methods with `do`/`catch` inside `switch` require explicit `return` on all branches; implicit return doesn't work when some branches have explicit `return`.
