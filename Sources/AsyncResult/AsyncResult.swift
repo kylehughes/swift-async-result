@@ -68,7 +68,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     ///
     /// - Parameter body: An asynchronous closure that returns `Success` or throws `Failure`.
     @inlinable
-    public init(catching body: () async throws(Failure) -> Success) async {
+    public nonisolated(nonsending) init(catching body: nonisolated(nonsending) () async throws(Failure) -> Success) async {
         do {
             self = try await .completed(.success(body()))
         } catch {
@@ -82,7 +82,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     ///
     /// - Parameter body: An asynchronous throwing closure that returns `Success`.
     @inlinable
-    public init(catching body: () async throws -> Success) async where Failure == any Error {
+    public nonisolated(nonsending) init(catching body: nonisolated(nonsending) () async throws -> Success) async where Failure == any Error {
         do {
             self = try await .completed(.success(body()))
         } catch {
@@ -96,8 +96,8 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Parameter body: An asynchronous throwing closure that returns `Success`.
     /// - Parameter mapError: A closure that converts the thrown error into `Failure`.
     @inlinable
-    public init(
-        catching body: () async throws -> Success,
+    public nonisolated(nonsending) init(
+        catching body: nonisolated(nonsending) () async throws -> Success,
         mapError: (any Error) -> Failure
     ) async {
         do {
@@ -258,8 +258,8 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Returns: The result of `transform` if this instance represents a success, or the existing failure or
     ///   in-progress state.
     @inlinable
-    public func flatMap<NewSuccess>(
-        _ transform: (Success) async -> AsyncResult<NewSuccess, Failure>
+    public nonisolated(nonsending) func flatMap<NewSuccess>(
+        _ transform: nonisolated(nonsending) (Success) async -> AsyncResult<NewSuccess, Failure>
     ) async -> AsyncResult<NewSuccess, Failure> {
         switch self {
         case let .completed(result):
@@ -299,8 +299,8 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Returns: The result of `transform` if this instance represents a failure, or the existing success or
     ///   in-progress state.
     @inlinable
-    public func flatMapError<NewFailure>(
-        _ transform: (Failure) async -> AsyncResult<Success, NewFailure>
+    public nonisolated(nonsending) func flatMapError<NewFailure>(
+        _ transform: nonisolated(nonsending) (Failure) async -> AsyncResult<Success, NewFailure>
     ) async -> AsyncResult<Success, NewFailure> {
         switch self {
         case let .completed(result):
@@ -355,13 +355,13 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Returns: A new asynchronous result with the transformed success value, or the existing failure or in-progress
     ///   state.
     @inlinable
-    public func map<NewSuccess>(
-        _ transform: (Success) async -> NewSuccess
+    public nonisolated(nonsending) func map<NewSuccess>(
+        _ transform: nonisolated(nonsending) (Success) async -> NewSuccess
     ) async -> AsyncResult<NewSuccess, Failure> {
         switch self {
         case let .completed(result):
             switch result {
-            case let .success(value): .completed(.success(await transform(value)))
+            case let .success(value): await .completed(.success(transform(value)))
             case let .failure(error): .completed(.failure(error))
             }
         case .inProgress: .inProgress
@@ -375,15 +375,15 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Parameter failure: An asynchronous closure that transforms the failure value.
     /// - Returns: A new asynchronous result with both types transformed.
     @inlinable
-    public func map<NewSuccess, NewFailure>(
-        success transformSuccess: (Success) async -> NewSuccess,
-        failure transformFailure: (Failure) async -> NewFailure
+    public nonisolated(nonsending) func map<NewSuccess, NewFailure>(
+        success transformSuccess: nonisolated(nonsending) (Success) async -> NewSuccess,
+        failure transformFailure: nonisolated(nonsending) (Failure) async -> NewFailure
     ) async -> AsyncResult<NewSuccess, NewFailure> {
         switch self {
         case let .completed(result):
             switch result {
-            case let .success(value): .completed(.success(await transformSuccess(value)))
-            case let .failure(error): .completed(.failure(await transformFailure(error)))
+            case let .success(value): await .completed(.success(transformSuccess(value)))
+            case let .failure(error): await .completed(.failure(transformFailure(error)))
             }
         case .inProgress: .inProgress
         }
@@ -410,14 +410,14 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Returns: A new asynchronous result with the transformed failure value, or the existing success or in-progress
     ///   state.
     @inlinable
-    public func mapError<NewFailure>(
-        _ transform: (Failure) async -> NewFailure
+    public nonisolated(nonsending) func mapError<NewFailure>(
+        _ transform: nonisolated(nonsending) (Failure) async -> NewFailure
     ) async -> AsyncResult<Success, NewFailure> {
         switch self {
         case let .completed(result):
             switch result {
             case let .success(value): .completed(.success(value))
-            case let .failure(error): .completed(.failure(await transform(error)))
+            case let .failure(error): await .completed(.failure(transform(error)))
             }
         case .inProgress: .inProgress
         }
@@ -479,14 +479,14 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Parameter transform: An asynchronous closure that converts a failure value into a success value.
     /// - Returns: An infallible asynchronous result.
     @inlinable
-    public func recover(
-        _ transform: (Failure) async -> Success
+    public nonisolated(nonsending) func recover(
+        _ transform: nonisolated(nonsending) (Failure) async -> Success
     ) async -> AsyncResult<Success, Never> {
         switch self {
         case let .completed(result):
             switch result {
             case let .success(value): .completed(.success(value))
-            case let .failure(error): .completed(.success(await transform(error)))
+            case let .failure(error): await .completed(.success(transform(error)))
             }
         case .inProgress: .inProgress
         }
@@ -508,7 +508,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
             switch result {
             case let .success(value):
                 do {
-                    return .completed(.success(try transform(value)))
+                    return try .completed(.success(transform(value)))
                 } catch {
                     return .completed(.failure(error))
                 }
@@ -531,7 +531,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
             switch result {
             case let .success(value):
                 do {
-                    return .completed(.success(try transform(value)))
+                    return try .completed(.success(transform(value)))
                 } catch {
                     return .completed(.failure(error))
                 }
@@ -557,7 +557,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
             switch result {
             case let .success(value):
                 do {
-                    return .completed(.success(try transform(value)))
+                    return try .completed(.success(transform(value)))
                 } catch {
                     return .completed(.failure(mapError(error)))
                 }
@@ -572,15 +572,15 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Parameter transform: An asynchronous closure that transforms the success value or throws `Failure`.
     /// - Returns: A new asynchronous result with the transformed success value, or the thrown error as a failure.
     @inlinable
-    public func tryMap<NewSuccess>(
-        _ transform: (Success) async throws(Failure) -> NewSuccess
+    public nonisolated(nonsending) func tryMap<NewSuccess>(
+        _ transform: nonisolated(nonsending) (Success) async throws(Failure) -> NewSuccess
     ) async -> AsyncResult<NewSuccess, Failure> {
         switch self {
         case let .completed(result):
             switch result {
             case let .success(value):
                 do {
-                    return .completed(.success(try await transform(value)))
+                    return try await .completed(.success(transform(value)))
                 } catch {
                     return .completed(.failure(error))
                 }
@@ -595,15 +595,15 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Parameter transform: An asynchronous throwing closure that transforms the success value.
     /// - Returns: A new asynchronous result with the transformed success value, or the thrown error as a failure.
     @inlinable
-    public func tryMap<NewSuccess>(
-        _ transform: (Success) async throws -> NewSuccess
+    public nonisolated(nonsending) func tryMap<NewSuccess>(
+        _ transform: nonisolated(nonsending) (Success) async throws -> NewSuccess
     ) async -> AsyncResult<NewSuccess, Failure> where Failure == any Error {
         switch self {
         case let .completed(result):
             switch result {
             case let .success(value):
                 do {
-                    return .completed(.success(try await transform(value)))
+                    return try await .completed(.success(transform(value)))
                 } catch {
                     return .completed(.failure(error))
                 }
@@ -620,8 +620,8 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
     /// - Parameter mapError: A closure that converts the thrown error into `Failure`.
     /// - Returns: A new asynchronous result with the transformed success value, or the mapped error as a failure.
     @inlinable
-    public func tryMap<NewSuccess>(
-        _ transform: (Success) async throws -> NewSuccess,
+    public nonisolated(nonsending) func tryMap<NewSuccess>(
+        _ transform: nonisolated(nonsending) (Success) async throws -> NewSuccess,
         mapError: (any Error) -> Failure
     ) async -> AsyncResult<NewSuccess, Failure> {
         switch self {
@@ -629,7 +629,7 @@ public enum AsyncResult<Success, Failure> where Failure: Error {
             switch result {
             case let .success(value):
                 do {
-                    return .completed(.success(try await transform(value)))
+                    return try await .completed(.success(transform(value)))
                 } catch {
                     return .completed(.failure(mapError(error)))
                 }

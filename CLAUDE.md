@@ -30,7 +30,7 @@ When adding new API surface, add tests that exercise every code path across all 
 
 The entire public API lives in `Sources/AsyncResult/AsyncResult.swift`. The type is a two-case enum (`.completed(Result)`, `.inProgress`) with initializers, computed properties, and combinators. All public members are `@inlinable` with doc comments.
 
-Tests use Swift Testing (`import Testing`, `@Test`) in `Tests/AsyncResultTests/AsyncResultTests.swift`, organized into `@Suite`s by functional area.
+Tests use Swift Testing (`import Testing`, `@Test`) in `Tests/AsyncResultTests/`, organized into `@Suite`s by functional area with one file per suite and one file per shared helper type.
 
 ## Conventions
 
@@ -38,7 +38,7 @@ Tests use Swift Testing (`import Testing`, `@Test`) in `Tests/AsyncResultTests/A
 - **Lexicographic symbol ordering** — within each type, members are ordered by access level, then alphabetically by identifier. Overloads of the same name are grouped together (sync before async). Suites and top-level types at file scope follow the same rule.
 - **`@Test("...")` and `@Suite("...")`** — all test annotations include description strings. Test descriptions are declarative sentences asserting what the test proves.
 - **`@inlinable`** on all public members.
-- **No `sending`** on closure parameters — under SE-0461 (Swift 6.2 default), `nonisolated async` methods inherit the caller's isolation, so closures awaited inline never cross an isolation boundary.
+- **`nonisolated(nonsending)`** on all async methods and their async closure parameters — ensures methods inherit the caller's isolation so closures awaited inline never cross an isolation boundary. Required because SE-0461 (`NonisolatedNonsendingByDefault`) is not yet the Swift 6.2 default. Sync closure parameters (e.g. `mapError:`) do not need the annotation.
 - **Percolated `try`/`await`** — place `try` and `await` on the outermost expression (`self = try await .completed(.success(body()))`) rather than directly on the throwing/async call. This keeps the assignment visually uniform across overloads.
 - **Overload pattern** — `init(catching:)` and `tryMap` both follow the same three-variant pattern: `throws(Failure)` (typed), `throws` with `where Failure == any Error` (untyped), and `throws` with `mapError:` (untyped with mapping). Each has sync + async overloads (6 total per family).
 - **Async overloads** — each sync combinator has a corresponding `async` overload. When testing async overloads, closures must be genuinely async (use a helper like `forceAsync`) or the compiler will select the sync overload, resulting in missing coverage.
